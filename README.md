@@ -101,7 +101,7 @@ Las pruebas funcionales del sistema IUD GPT se ejecutaron en dos fases durante e
 - **Resultado:** ✓ APROBADO
 - **Fecha ejecución:** Noviembre 2024
 
-#### 3.4 Pruebas de Usabilidad con Usuarios Reales
+#### 3.3 Pruebas de Usabilidad con Usuarios Reales
 
 **Fase 1 - Versión Inicial (Diseño Rojo)**
 - **Participantes:** 15 estudiantes, 3 docentes
@@ -181,66 +181,19 @@ El sistema está listo para transición a ambiente productivo bajo gestión de l
 
 **Categorías de Consultas Disponibles:**
 - Contenido del curso
-- Fechas de entrega
-- Métodos de evaluación
+- Objetivos de aprendizaje
+- Evaluación del curso
+- Entrega de trabajos
 - Material de estudio
-- Contacto con profesor
+- Foros de discusión
+- Contactar a profesor
+- Recursos de la biblioteca
 
 **Buenas Prácticas:**
 - Sea específico en sus consultas
 - Use lenguaje natural (escriba como hablaría)
 - Si la respuesta no es clara, reformule su pregunta
 - Su historial de conversación se guarda automáticamente
-
----
-
-### Manual de Usuario - Docentes
-
-#### Configuración del Asistente en Canvas
-
-**Activación en el Curso:**
-1. Ingrese a su curso en Canvas como instructor
-2. Vaya a "Configuración" > "Aplicaciones"
-3. Localice "IUD GPT" en aplicaciones externas
-4. Active la aplicación para su curso
-
-**Personalización de Respuestas (Opcional):**
-1. Acceda a la interfaz administrativa de IUD GPT
-2. Agregue información específica de su curso
-3. Personalice preguntas frecuentes según necesidades
-
-**Monitoreo de Uso:**
-- Revise estadísticas de consultas frecuentes
-- Identifique temas que requieren mayor clarificación
-- Ajuste contenido del curso según patrones identificados
-
----
-
-### Manual de Usuario - Administradores
-
-#### Gestión del Sistema IUD GPT
-
-**Requisitos Previos:**
-- Acceso administrativo a Canvas LMS
-- Credenciales de administrador de IUD GPT
-- Acceso a consola AWS (para gestión de costos)
-
-**Configuración Inicial:**
-1. Instalar aplicación LTI en Canvas (ver Manual de Instalación)
-2. Configurar variables de entorno en servidor
-3. Verificar conectividad con AWS Bedrock
-4. Habilitar cursos autorizados
-
-**Monitoreo del Sistema:**
-- **Uso de tokens AWS:** Revisar semanalmente en consola AWS
-- **Disponibilidad:** Monitorear health checks en Render/servidor
-- **Logs de error:** Revisar diariamente logs de aplicación
-- **Estadísticas de uso:** Dashboard administrativo
-
-**Mantenimiento:**
-- **Actualizaciones:** Coordinar con equipo investigador
-- **Respaldos:** Base de datos MongoDB respaldada semanalmente
-- **Escalamiento:** Ajustar recursos según demanda
 
 ---
 
@@ -256,7 +209,6 @@ El sistema está listo para transición a ambiente productivo bajo gestión de l
 
 **Servicios Externos Requeridos:**
 - Cuenta AWS con acceso a Bedrock
-- Instancia MongoDB (local o Atlas)
 - Canvas LMS con permisos de administrador
 - Servidor con capacidad de exponer puerto HTTPS (443)
 
@@ -294,10 +246,6 @@ npm install
 
 **Backend (.env):**
 ```
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/iudgpt
-# o para MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/iudgpt
 
 # AWS Bedrock
 AWS_REGION=us-east-1
@@ -323,23 +271,8 @@ REACT_APP_BACKEND_URL=https://tu-dominio-backend.com
 REACT_APP_CANVAS_URL=https://canvas.iudigital.edu.co
 ```
 
-#### 4. Configuración de Base de Datos
 
-```bash
-# Iniciar MongoDB (si es local)
-sudo systemctl start mongod
-sudo systemctl enable mongod
-
-# Crear base de datos y colecciones iniciales
-mongo
-> use iudgpt
-> db.createCollection("conversations")
-> db.createCollection("courses")
-> db.createCollection("users")
-> exit
-```
-
-#### 5. Construcción y Despliegue
+#### 4. Construcción y Despliegue
 
 **Backend:**
 ```bash
@@ -363,58 +296,8 @@ pm2 start npm --name iudgpt-frontend -- start
 pm2 save
 ```
 
-#### 6. Configuración de Proxy Inverso (Nginx)
 
-```nginx
-# /etc/nginx/sites-available/iudgpt
-
-# Backend
-server {
-    listen 443 ssl;
-    server_name api-iudgpt.iudigital.edu.co;
-
-    ssl_certificate /path/to/certificate.crt;
-    ssl_certificate_key /path/to/private.key;
-
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-
-# Frontend
-server {
-    listen 443 ssl;
-    server_name iudgpt.iudigital.edu.co;
-
-    ssl_certificate /path/to/certificate.crt;
-    ssl_certificate_key /path/to/private.key;
-
-    location / {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-```bash
-# Activar configuración
-sudo ln -s /etc/nginx/sites-available/iudgpt /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-#### 7. Configuración LTI en Canvas
+#### 5. Configuración LTI en Canvas
 
 **Paso 1: Generar Credenciales LTI**
 - Consumer Key: (generar string alfanumérico único)
@@ -443,12 +326,8 @@ sudo systemctl reload nginx
 **Checklist post-instalación:**
 - [ ] Backend responde en `https://api-iudgpt.iudigital.edu.co/health`
 - [ ] Frontend accesible en `https://iudgpt.iudigital.edu.co`
-- [ ] MongoDB conectado (verificar logs)
 - [ ] AWS Bedrock responde (hacer prueba de consulta)
 - [ ] LTI Canvas funciona (probar desde un curso)
-- [ ] SSL certificados válidos
-- [ ] Logs funcionando correctamente
-- [ ] PM2 procesos corriendo
 
 ---
 
@@ -521,106 +400,6 @@ Errores:
 - 500: Error al procesar con AWS Bedrock
 ```
 
-**GET /api/conversations/:conversation_id**
-```
-Descripción: Obtener historial de conversación
-Authorization: Bearer <session_token>
-
-Respuesta exitosa (200):
-{
-  "conversation_id": "conv_abc123",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hola",
-      "timestamp": "2024-11-15T10:25:00Z"
-    },
-    {
-      "role": "assistant",
-      "content": "Hola, ¿en qué puedo ayudarte?",
-      "timestamp": "2024-11-15T10:25:02Z"
-    }
-  ]
-}
-```
-
-#### Preguntas Frecuentes
-
-**GET /api/faqs/:course_id**
-```
-Descripción: Obtener preguntas frecuentes del curso
-Authorization: Bearer <session_token>
-
-Respuesta exitosa (200):
-{
-  "course_id": "67890",
-  "faqs": [
-    {
-      "id": "faq_1",
-      "category": "Contenido del curso",
-      "question": "¿Cuál es el contenido del curso?",
-      "answer": "El curso cubre..."
-    },
-    {
-      "id": "faq_2",
-      "category": "Evaluación",
-      "question": "¿Cómo se evalúa este curso?",
-      "answer": "La evaluación incluye..."
-    }
-  ]
-}
-```
-
-#### Administración
-
-**PUT /api/admin/faqs/:course_id**
-```
-Descripción: Actualizar preguntas frecuentes (solo docentes)
-Authorization: Bearer <session_token>
-Content-Type: application/json
-
-Body:
-{
-  "faqs": [
-    {
-      "category": "Fechas",
-      "question": "¿Cuándo es el examen final?",
-      "answer": "El examen final es..."
-    }
-  ]
-}
-
-Respuesta exitosa (200):
-{
-  "message": "FAQs actualizadas exitosamente",
-  "updated_count": 1
-}
-
-Errores:
-- 403: Usuario no autorizado (no es docente del curso)
-```
-
-**GET /api/admin/stats/:course_id**
-```
-Descripción: Estadísticas de uso (solo docentes)
-Authorization: Bearer <session_token>
-
-Respuesta exitosa (200):
-{
-  "course_id": "67890",
-  "total_conversations": 234,
-  "total_messages": 1450,
-  "unique_users": 45,
-  "avg_response_time": 2.1,
-  "most_asked_questions": [
-    {
-      "question": "¿Cuándo es la entrega del proyecto?",
-      "count": 67
-    }
-  ],
-  "period": "last_30_days"
-}
-```
 
 ### Integración con AWS Bedrock
 
@@ -670,353 +449,7 @@ async function generateResponse(userMessage, context) {
 
 ---
 
-## ANEXO E: Esquema de Base de Datos
-
-### Colecciones MongoDB
-
-#### Collection: `conversations`
-
-```javascript
-{
-  _id: ObjectId("..."),
-  conversation_id: "conv_abc123",
-  user_id: "12345",
-  course_id: "67890",
-  created_at: ISODate("2024-11-15T10:25:00Z"),
-  updated_at: ISODate("2024-11-15T10:30:00Z"),
-  messages: [
-    {
-      message_id: "msg_1",
-      role: "user",  // "user" o "assistant"
-      content: "¿Cuáles son las fechas de entrega?",
-      timestamp: ISODate("2024-11-15T10:25:00Z"),
-      tokens_used: null  // solo para mensajes del asistente
-    },
-    {
-      message_id: "msg_2",
-      role: "assistant",
-      content: "Las fechas de entrega son...",
-      timestamp: ISODate("2024-11-15T10:25:02Z"),
-      tokens_used: 150,
-      source: "ai"  // "ai" o "faq"
-    }
-  ],
-  metadata: {
-    total_messages: 2,
-    total_tokens: 150
-  }
-}
-```
-
-**Índices:**
-```javascript
-db.conversations.createIndex({ user_id: 1, course_id: 1 });
-db.conversations.createIndex({ created_at: -1 });
-db.conversations.createIndex({ conversation_id: 1 }, { unique: true });
-```
-
-#### Collection: `courses`
-
-```javascript
-{
-  _id: ObjectId("..."),
-  course_id: "67890",
-  course_name: "Programación Web I",
-  faqs: [
-    {
-      faq_id: "faq_1",
-      category: "Contenido del curso",
-      question: "¿Cuál es el contenido del curso?",
-      answer: "El curso cubre HTML, CSS, JavaScript...",
-      created_by: "prof_123",
-      created_at: ISODate("2024-09-01T00:00:00Z")
-    }
-  ],
-  settings: {
-    enabled: true,
-    max_tokens_per_query: 1024,
-    response_temperature: 0.7
-  },
-  created_at: ISODate("2024-09-01T00:00:00Z"),
-  updated_at: ISODate("2024-11-15T10:00:00Z")
-}
-```
-
-**Índices:**
-```javascript
-db.courses.createIndex({ course_id: 1 }, { unique: true });
-```
-
-#### Collection: `users`
-
-```javascript
-{
-  _id: ObjectId("..."),
-  user_id: "12345",
-  canvas_id: "canvas_12345",
-  name: "Juan Pérez",
-  email: "juan.perez@iudigital.edu.co",
-  role: "student",  // "student", "teacher", "admin"
-  courses: ["67890", "67891"],
-  preferences: {
-    language: "es",
-    notifications: true
-  },
-  created_at: ISODate("2024-09-01T00:00:00Z"),
-  last_login: ISODate("2024-11-15T10:25:00Z")
-}
-```
-
-**Índices:**
-```javascript
-db.users.createIndex({ user_id: 1 }, { unique: true });
-db.users.createIndex({ canvas_id: 1 });
-```
-
-#### Collection: `usage_stats`
-
-```javascript
-{
-  _id: ObjectId("..."),
-  date: ISODate("2024-11-15T00:00:00Z"),
-  course_id: "67890",
-  metrics: {
-    total_conversations: 23,
-    total_messages: 145,
-    unique_users: 15,
-    total_tokens: 12500,
-    avg_response_time: 2.1,
-    peak_concurrent_users: 8
-  },
-  top_questions: [
-    {
-      question: "¿Cuándo es la entrega del proyecto?",
-      count: 12
-    }
-  ]
-}
-```
-
-**Índices:**
-```javascript
-db.usage_stats.createIndex({ date: -1, course_id: 1 });
-```
-
----
-
-## ANEXO F: Consideraciones de Seguridad
-
-### Medidas de Seguridad Implementadas
-
-#### 1. Autenticación y Autorización
-
-**Autenticación LTI:**
-- Validación de firma OAuth en cada request LTI
-- Verificación de consumer key y secret
-- Validación de timestamp para prevenir replay attacks
-- Tokens de sesión JWT con expiración de 8 horas
-
-**Autorización basada en roles:**
-- Estudiantes: solo acceso a sus conversaciones
-- Docentes: acceso a estadísticas y configuración de su curso
-- Administradores: acceso completo al sistema
-
-#### 2. Protección de Datos
-
-**Encriptación:**
-- HTTPS/TLS 1.2+ para todas las comunicaciones
-- Encriptación de tokens JWT
-- Variables de entorno para credenciales sensibles (nunca en código)
-
-**Privacidad:**
-- No se almacenan contraseñas de usuario
-- Datos de conversación segregados por curso
-- Cumplimiento con políticas institucionales de privacidad
-
-#### 3. Validación de Entrada
-
-**Sanitización de inputs:**
-- Validación de longitud máxima de mensajes (5000 caracteres)
-- Escapado de caracteres especiales para prevenir injection
-- Validación de tipos de datos en APIs
-
-#### 4. Rate Limiting
-
-```javascript
-// Implementado en backend
-const rateLimit = require("express-rate-limit");
-
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minuto
-  max: 30, // máximo 30 requests por minuto por IP
-  message: "Demasiadas solicitudes, por favor intente más tarde"
-});
-
-app.use("/api/", apiLimiter);
-```
-
-#### 5. Monitoreo y Logging
-
-**Logs de seguridad:**
-- Intentos de autenticación fallidos
-- Accesos no autorizados
-- Errores de validación de tokens
-- Actividad sospechosa (patrones anómalos)
-
-**Retención de logs:**
-- Logs de aplicación: 30 días
-- Logs de seguridad: 90 días
-- Respaldos: según política institucional
-
-### Recomendaciones de Seguridad para Producción
-
-1. **Cambiar todas las credenciales por defecto**
-   - Generar nuevos LTI consumer key/secret
-   - Rotar AWS access keys regularmente
-   - Actualizar SESSION_SECRET
-
-2. **Configurar firewall**
-   - Permitir solo puertos 443 (HTTPS) y 22 (SSH)
-   - Restringir acceso SSH solo a IPs institucionales
-
-3. **Habilitar WAF (Web Application Firewall)**
-   - Protección contra SQL injection
-   - Protección contra XSS
-   - Rate limiting adicional
-
-4. **Implementar monitoreo continuo**
-   - Alertas de disponibilidad del servicio
-   - Alertas de uso anómalo de recursos
-   - Alertas de intentos de acceso no autorizado
-
----
-
-## ANEXO G: Plan de Contingencia y Rollback
-
-### Escenarios de Contingencia
-
-#### Escenario 1: Falla del Servicio AWS Bedrock
-
-**Síntomas:**
-- Errores 500 en API de conversaciones
-- Timeouts en llamadas a AWS
-- Logs indicando problemas de conectividad AWS
-
-**Acciones:**
-1. Activar modo fallback a respuestas predefinidas (FAQs)
-2. Notificar a administradores por email
-3. Contactar soporte AWS si persiste > 30 minutos
-4. Revisar límites de cuota en cuenta AWS
-
-**Tiempo estimado de recuperación:** < 1 hora
-
-#### Escenario 2: Caída de Base de Datos MongoDB
-
-**Síntomas:**
-- Errores de conexión a MongoDB
-- Imposibilidad de recuperar historial
-- Logs: "MongoError: connection timeout"
-
-**Acciones:**
-1. Reiniciar servicio MongoDB: `sudo systemctl restart mongod`
-2. Si persiste, restaurar desde último backup
-3. Verificar espacio en disco (MongoDB requiere espacio libre)
-4. Revisar logs de MongoDB: `/var/log/mongodb/mongod.log`
-
-**Tiempo estimado de recuperación:** < 2 horas
-
-#### Escenario 3: Falla de Integración LTI con Canvas
-
-**Síntomas:**
-- Estudiantes no pueden acceder desde Canvas
-- Errores 401 en endpoint /lti/launch
-- Logs: "Invalid OAuth signature"
-
-**Acciones:**
-1. Verificar que credenciales LTI no hayan cambiado
-2. Revisar configuración en Canvas Admin
-3. Validar que URLs de callback sean correctas
-4. Regenerar credenciales LTI si es necesario
-
-**Tiempo estimado de recuperación:** < 30 minutos
-
-### Procedimiento de Rollback
-
-**Cuándo hacer rollback:**
-- Errores críticos en versión nueva (> 50% de usuarios afectados)
-- Degradación severa de performance (> 10 segundos respuesta)
-- Violación de seguridad detectada
-
-**Pasos de Rollback:**
-
-1. **Detener servicios actuales**
-```bash
-pm2 stop iudgpt-backend
-pm2 stop iudgpt-frontend
-```
-
-2. **Restaurar código anterior**
-```bash
-cd iud-gpt-backend
-git checkout tags/v1.0-stable  # o commit anterior estable
-npm install
-cd ../iud-gpt-front-end-nodejs
-git checkout tags/v1.0-stable
-npm install
-```
-
-3. **Restaurar base de datos (si es necesario)**
-```bash
-# Desde backup más reciente
-mongorestore --db iudgpt /path/to/backup/iudgpt/
-```
-
-4. **Reiniciar servicios**
-```bash
-pm2 restart iudgpt-backend
-pm2 restart iudgpt-frontend
-```
-
-5. **Verificar funcionamiento**
-- Probar acceso desde Canvas
-- Enviar consulta de prueba
-- Verificar logs para errores
-
-**Tiempo estimado de rollback completo:** < 15 minutos
-
-### Respaldos Automáticos
-
-**Script de backup diario:**
-```bash
-#!/bin/bash
-# /opt/scripts/backup-iudgpt.sh
-
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR=/opt/backups/iudgpt
-
-# Backup MongoDB
-mongodump --db iudgpt --out $BACKUP_DIR/mongodb_$DATE
-
-# Backup configuraciones
-cp -r /path/to/backend/.env $BACKUP_DIR/config_$DATE/
-cp -r /path/to/frontend/.env $BACKUP_DIR/config_$DATE/
-
-# Eliminar backups > 30 días
-find $BACKUP_DIR -type d -mtime +30 -exec rm -rf {} +
-
-# Notificar éxito
-echo "Backup completado: $DATE" | mail -s "IUD GPT Backup" admin@iudigital.edu.co
-```
-
-**Configurar en crontab:**
-```bash
-# Ejecutar todos los días a las 2:00 AM
-0 2 * * * /opt/scripts/backup-iudgpt.sh
-```
-
----
-
-## ANEXO H: Requerimientos de Infraestructura
+## ANEXO E: Requerimientos de Infraestructura
 
 ### Especificaciones Mínimas de Servidor
 
@@ -1089,35 +522,7 @@ Costo máximo esperado: $20-30 USD/mes (uso intensivo)
 
 ---
 
-## ANEXO I: SLA Propuestos
-
-### Acuerdos de Nivel de Servicio Recomendados
-
-**Disponibilidad del Sistema:**
-- Objetivo: 99.5% mensual (equivale a ~3.6 horas de downtime permitido/mes)
-- Horario de servicio: 24/7
-- Ventanas de mantenimiento: Domingos 2:00-4:00 AM (notificadas con 48h anticipación)
-
-**Tiempos de Respuesta:**
-- Consultas simples (FAQs): < 1 segundo (95% de casos)
-- Consultas con IA: < 3 segundos (90% de casos)
-- Carga inicial de interfaz: < 5 segundos
-
-**Soporte Técnico:**
-- Incidentes críticos (sistema caído): Respuesta en < 1 hora
-- Incidentes altos (degradación severa): Respuesta en < 4 horas
-- Incidentes medios: Respuesta en < 24 horas
-- Consultas generales: Respuesta en < 48 horas
-
-**Backups y Recuperación:**
-- Backups diarios automatizados
-- Retención: 30 días de backups
-- Tiempo de recuperación (RPO): < 24 horas
-- Punto de recuperación (RTO): < 1 hora para datos críticos
-
----
-
-## ANEXO J: Checklist de Entrega
+## ANEXO F: Entrega
 
 ### Verificación de Completitud
 
@@ -1131,35 +536,21 @@ Costo máximo esperado: $20-30 USD/mes (uso intensivo)
 **Documentación:**
 - [x] Manual de instalación completo
 - [x] Manual de usuario (estudiantes)
-- [x] Manual de usuario (docentes)
-- [x] Manual de administrador
 - [x] Documentación de API
-- [x] Esquema de base de datos
-- [x] Diagrama de arquitectura
 
 **Configuraciones:**
 - [x] Configuración LTI para Canvas
 - [x] Variables de entorno documentadas
-- [x] Scripts de respaldo incluidos
-- [x] Configuración de Nginx (ejemplo)
 
 **Pruebas:**
 - [x] Casos de prueba documentados
 - [x] Criterios de aceptación definidos
 - [x] Resultados de pruebas funcionales
-- [x] Evidencias de pruebas con usuarios
 
-**Seguridad:**
-- [x] Medidas de seguridad documentadas
-- [x] Plan de contingencia definido
-- [x] Procedimiento de rollback documentado
-- [x] Recomendaciones de seguridad
 
 **Infraestructura:**
 - [x] Requerimientos de servidor especificados
 - [x] Estimación de costos AWS
-- [x] Plan de escalabilidad
-- [x] SLA propuestos
 
 ### Entregables Físicos/Digitales
 
@@ -1173,12 +564,8 @@ Costo máximo esperado: $20-30 USD/mes (uso intensivo)
    - Versión: 1.0
    - Fecha: Enero 2026
 
-3. **Credenciales y Configuraciones:**
-   - Archivo cifrado con credenciales AWS (entrega presencial)
-   - Consumer Key y Secret LTI (entrega presencial)
-   - Acceso administrativo MongoDB (coordinar con equipo)
 
-4. **Capacitación:**
+3. **Capacitación:**
    - Sesión de transferencia de conocimiento (fecha a coordinar)
    - Q&A session con equipo técnico
    - Contacto para soporte post-entrega (30 días)
@@ -1207,7 +594,6 @@ _________________________
 Jorge Armando Julio Cruz  
 Coinvestigador  
 
-**Fecha:** ____________ de Enero de 2026
 
 ---
 

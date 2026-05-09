@@ -5,8 +5,6 @@
 - Boris Alberto Salleg Royero (Coinvestigador)
 - Jorge Armando Julio Cruz (Coinvestigador)
 
-**Fecha de Entrega:** Enero 2026
-
 ---
 
 ## ANEXO A: Pruebas Funcionales y Criterios de Aceptación
